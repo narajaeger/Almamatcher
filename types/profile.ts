@@ -1,6 +1,8 @@
 // types/profile.ts
 // Semua tipe data untuk modul Profile
 
+import { UNIVERSITIES } from '../constants/eduData';
+
 export type Gender = 'male' | 'female';
 
 export type MBTI =
@@ -35,7 +37,7 @@ export interface Profile {
   year_entry: number | null;
 
   // Data diri
-  birth_date: string | null;       // ISO date string
+  birth_date: string | null;
   gender: Gender | null;
   height_cm: number | null;
   weight_kg: number | null;
@@ -47,6 +49,20 @@ export interface Profile {
   religion: Religion | null;
   hobbies: string[] | null;
   looking_for: LookingFor | null;
+
+  // Social links (URL or handle)
+  instagram: string | null;
+  spotify: string | null;
+  linkedin: string | null;
+
+  // Discover preferences
+  pref_gender: 'male' | 'female' | 'all' | null;
+  pref_age_min: number | null;
+  pref_age_max: number | null;
+  pref_university: string | null;
+
+  // Push notifications
+  push_token: string | null;
 
   // Status
   onboarding_completed: boolean;
@@ -63,39 +79,14 @@ export type ProfileUpdate = Partial<Omit<Profile,
   'id' | 'email' | 'created_at' | 'updated_at' | 'is_premium' | 'premium_until'
 >>;
 
-// Data tiap step onboarding
 export interface OnboardingStepData {
-  step1: {
-    full_name: string;
-    username: string;
-    birth_date: string;
-    gender: Gender;
-  };
-  step2: {
-    university: string;
-    faculty: string;
-    major: string;
-    year_entry: number;
-  };
-  step3: {
-    height_cm: number;
-    weight_kg: number;
-    city_origin: string;
-    religion: Religion;
-  };
-  step4: {
-    mbti: MBTI | null;
-    zodiac: Zodiac | null;
-    hobbies: string[];
-  };
-  step5: {
-    looking_for: LookingFor;
-    bio: string;
-    avatar_url: string | null;
-  };
+  step1: { full_name: string; username: string; birth_date: string; gender: Gender; };
+  step2: { university: string; faculty: string; major: string; year_entry: number; };
+  step3: { height_cm: number; weight_kg: number; city_origin: string; religion: Religion; };
+  step4: { mbti: MBTI | null; zodiac: Zodiac | null; hobbies: string[]; };
+  step5: { looking_for: LookingFor; bio: string; avatar_url: string | null; };
 }
 
-// Foto profil
 export interface ProfilePhoto {
   id: string;
   user_id: string;
@@ -104,14 +95,13 @@ export interface ProfilePhoto {
   created_at: string;
 }
 
-// Untuk ditampilkan di card (subset)
 export interface ProfileCard {
   id: string;
   full_name: string;
   avatar_url: string | null;
   university: string | null;
   major: string | null;
-  age: number | null;           // Dihitung dari birth_date
+  age: number | null;
   gender: Gender | null;
   mbti: MBTI | null;
   zodiac: Zodiac | null;
@@ -119,7 +109,6 @@ export interface ProfileCard {
   bio: string | null;
 }
 
-// Hobi yang tersedia
 export const HOBBIES_LIST = [
   'Musik', 'Gaming', 'Olahraga', 'Memasak', 'Membaca',
   'Fotografi', 'Traveling', 'Nonton Film', 'Seni & Desain',
@@ -129,19 +118,10 @@ export const HOBBIES_LIST = [
 
 export type Hobby = typeof HOBBIES_LIST[number];
 
-// Universitas populer (bisa diexpand)
-export const UNIVERSITIES_LIST = [
-  'Universitas Indonesia',
-  'ITB - Institut Teknologi Bandung',
-  'UGM - Universitas Gadjah Mada',
-  'ITS - Institut Teknologi Sepuluh Nopember',
-  'Universitas Airlangga',
-  'Universitas Brawijaya',
-  'Universitas Diponegoro',
-  'Universitas Sebelas Maret',
-  'Universitas Padjadjaran',
-  'Universitas Hasanuddin',
-  'UNNES - Universitas Negeri Semarang',
-  'UNS - Universitas Negeri Surakarta',
-  'Lainnya',
-] as const;
+// Re-exported from constants/eduData so onboarding/edit screens share the
+// same (much larger, and correctly-abbreviated) list used by search filters.
+// Previously this was a short, hand-rolled duplicate that also contained a
+// wrong entry ("UNS - Universitas Negeri Surakarta" — UNS is actually
+// Universitas Sebelas Maret), which is part of why searching by abbreviation
+// didn't line up with what people had picked during onboarding.
+export const UNIVERSITIES_LIST = [...UNIVERSITIES, 'Lainnya'] as const;

@@ -6,9 +6,10 @@ import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useProfileStore } from '../../stores/profileStore';
 import {
-  StyledInput, SelectPicker, PrimaryButton,
+  SelectPicker, PrimaryButton,
 } from '../../components/ui/FormComponents';
-import { UNIVERSITIES_LIST } from '../../types/profile';
+import SearchableSelect from '../../components/ui/SearchableSelect';
+import { UNIVERSITIES, MAJORS } from '../../constants/eduData';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: 8 }, (_, i) =>
@@ -72,25 +73,16 @@ export default function OnboardingStep2() {
         </Text>
       </View>
 
-      <SelectPicker
-        label="Universitas"
-        value={university || null}
-        options={[...UNIVERSITIES_LIST]}
-        onSelect={setUniversity}
-        placeholder="Pilih universitas..."
-        error={errors.university}
-      />
-
-      {/* Atau isi manual jika universitas tidak ada di list */}
-      {university === 'Lainnya' && (
-        <StyledInput
-          label="Nama Universitas (isi manual)"
-          value={university === 'Lainnya' ? '' : university}
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Universitas</Text>
+        <SearchableSelect
+          value={university}
           onChangeText={setUniversity}
-          placeholder="Contoh: Universitas XYZ"
-          error={errors.university}
+          options={UNIVERSITIES}
+          placeholder="Cari universitas... (atau ketik manual)"
         />
-      )}
+        {errors.university && <Text style={styles.fieldError}>{errors.university}</Text>}
+      </View>
 
       <SelectPicker
         label="Fakultas"
@@ -101,13 +93,16 @@ export default function OnboardingStep2() {
         error={errors.faculty}
       />
 
-      <StyledInput
-        label="Program Studi / Jurusan"
-        value={major}
-        onChangeText={setMajor}
-        placeholder="Contoh: Teknik Informatika"
-        error={errors.major}
-      />
+      <View style={styles.fieldGroup}>
+        <Text style={styles.fieldLabel}>Program Studi / Jurusan</Text>
+        <SearchableSelect
+          value={major}
+          onChangeText={setMajor}
+          options={MAJORS}
+          placeholder="Cari jurusan/prodi... (atau ketik manual)"
+        />
+        {errors.major && <Text style={styles.fieldError}>{errors.major}</Text>}
+      </View>
 
       <SelectPicker
         label="Angkatan (Tahun Masuk)"
@@ -139,7 +134,7 @@ export default function OnboardingStep2() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 24, paddingBottom: 48 },
   header: { marginBottom: 32, alignItems: 'center' },
   emoji: { fontSize: 48, marginBottom: 12 },
@@ -153,4 +148,7 @@ const styles = StyleSheet.create({
   },
   infoText: { fontSize: 13, color: '#92400E' },
   footer: { gap: 12 },
+  fieldGroup: { marginBottom: 24 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', letterSpacing: 0.2, marginBottom: 8 },
+  fieldError: { fontSize: 12, color: '#DC2626', marginTop: 4 },
 });

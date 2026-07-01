@@ -9,9 +9,93 @@
       "android",
       "web"
     ],
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EC4899"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.almamatcher.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "AlmaMatcher membutuhkan akses kamera untuk foto profil.",
+        "NSPhotoLibraryUsageDescription": "AlmaMatcher membutuhkan akses galeri untuk foto profil.",
+        "NSUserNotificationUsageDescription": "AlmaMatcher mengirim notifikasi saat ada pesan atau match baru.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#EC4899"
+      },
+      "package": "com.almamatcher.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "AlmaMatcher",
+      "shortName": "AlmaMatcher",
+      "description": "Temukan pasangan alumni terbaikmu",
+      "themeColor": "#EC4899",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "orientation": "portrait",
+      "icon": "./assets/icon.png",
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "backgroundColor": "#EC4899"
+      }
+    },
     "plugins": [
       "expo-router",
-      "@react-native-community/datetimepicker"
-    ]
+      [
+        "@react-native-community/datetimepicker",
+        {}
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AlmaMatcher membutuhkan akses galeri untuk foto profil.",
+          "cameraPermission": "AlmaMatcher membutuhkan akses kamera untuk foto profil."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#EC4899",
+          "sounds": [],
+          "mode": "production"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "81f203a8-50e9-4d08-a11d-d625c2eb5333"
+      }
+    },
+    "owner": "almamatcher"
   }
 }

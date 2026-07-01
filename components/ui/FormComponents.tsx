@@ -1,11 +1,11 @@
-// components/ui/FormComponents.tsx
-// Komponen form yang dipakai di Onboarding & Edit Profile
+// components/ui/FormComponents.tsx — Shared form UI
 
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, Modal, FlatList, Pressable,
+  StyleSheet, Modal, FlatList, Pressable, ActivityIndicator,
 } from 'react-native';
+import { Colors, Radii, Spacing, Shadows } from '../../constants/theme';
 
 // ============================================
 // StyledInput
@@ -30,7 +30,7 @@ export function StyledInput({
   const [focused, setFocused] = useState(false);
 
   return (
-    <View style={styles.inputWrapper}>
+    <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         style={[
@@ -42,7 +42,7 @@ export function StyledInput({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9CA3AF"
+        placeholderTextColor={Colors.textTertiary}
         keyboardType={keyboardType}
         multiline={multiline}
         maxLength={maxLength}
@@ -59,7 +59,7 @@ export function StyledInput({
 }
 
 // ============================================
-// SelectPicker — dropdown sederhana
+// SelectPicker
 // ============================================
 interface SelectPickerProps {
   label: string;
@@ -76,26 +76,28 @@ export function SelectPicker({
   const [visible, setVisible] = useState(false);
 
   return (
-    <View style={styles.inputWrapper}>
+    <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
       <TouchableOpacity
-        style={[styles.input, styles.selectButton, error ? styles.inputError : null]}
+        style={[styles.input, styles.selectBtn, error ? styles.inputError : null]}
         onPress={() => setVisible(true)}
       >
         <Text style={value ? styles.selectValue : styles.selectPlaceholder}>
           {value ?? placeholder}
         </Text>
-        <Text style={styles.chevron}>▾</Text>
+        <Text style={styles.chevron}>⌄</Text>
       </TouchableOpacity>
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       <Modal visible={visible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setVisible(false)}>
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{label}</Text>
             <FlatList
               data={options}
               keyExtractor={(item) => item}
+              showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[styles.modalOption, item === value && styles.modalOptionSelected]}
@@ -107,7 +109,9 @@ export function SelectPicker({
                   ]}>
                     {item}
                   </Text>
-                  {item === value && <Text style={styles.checkmark}>✓</Text>}
+                  {item === value && (
+                    <View style={styles.checkDot} />
+                  )}
                 </TouchableOpacity>
               )}
             />
@@ -119,7 +123,7 @@ export function SelectPicker({
 }
 
 // ============================================
-// ChipSelector — pilih multiple dari list
+// ChipSelector
 // ============================================
 interface ChipSelectorProps {
   label: string;
@@ -134,11 +138,11 @@ export function ChipSelector({
   label, options, selected, onToggle, maxSelect, error,
 }: ChipSelectorProps) {
   return (
-    <View style={styles.inputWrapper}>
+    <View style={styles.fieldGroup}>
       <View style={styles.labelRow}>
         <Text style={styles.label}>{label}</Text>
         {maxSelect && (
-          <Text style={styles.labelHint}>Pilih max {maxSelect}</Text>
+          <Text style={styles.labelHint}>Maks {maxSelect}</Text>
         )}
       </View>
       <View style={styles.chipContainer}>
@@ -155,6 +159,7 @@ export function ChipSelector({
               ]}
               onPress={() => !isDisabled && onToggle(item)}
               disabled={isDisabled}
+              activeOpacity={0.7}
             >
               <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                 {item}
@@ -179,16 +184,16 @@ interface GenderSelectorProps {
 
 export function GenderSelector({ value, onChange, error }: GenderSelectorProps) {
   return (
-    <View style={styles.inputWrapper}>
+    <View style={styles.fieldGroup}>
       <Text style={styles.label}>Gender</Text>
       <View style={styles.genderRow}>
         {(['male', 'female'] as const).map((g) => (
           <TouchableOpacity
             key={g}
-            style={[styles.genderButton, value === g && styles.genderButtonSelected]}
+            style={[styles.genderBtn, value === g && styles.genderBtnSelected]}
             onPress={() => onChange(g)}
+            activeOpacity={0.7}
           >
-            <Text style={styles.genderEmoji}>{g === 'male' ? '👨' : '👩'}</Text>
             <Text style={[styles.genderText, value === g && styles.genderTextSelected]}>
               {g === 'male' ? 'Laki-laki' : 'Perempuan'}
             </Text>
@@ -222,21 +227,25 @@ export function PrimaryButton({ title, onPress, disabled, loading, variant = 'pr
       ]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.85}
     >
-      <Text style={[
-        styles.buttonText,
-        variant === 'secondary' && styles.buttonTextSecondary,
-        variant === 'ghost' && styles.buttonTextGhost,
-      ]}>
-        {loading ? 'Loading...' : title}
-      </Text>
+      {loading ? (
+        <ActivityIndicator color={variant === 'primary' ? Colors.textInverse : Colors.primary} size="small" />
+      ) : (
+        <Text style={[
+          styles.buttonText,
+          variant === 'secondary' && styles.buttonTextSecondary,
+          variant === 'ghost' && styles.buttonTextGhost,
+        ]}>
+          {title}
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }
 
 // ============================================
-// NumberStepper — untuk tinggi/berat
+// NumberStepper
 // ============================================
 interface NumberStepperProps {
   label: string;
@@ -250,22 +259,24 @@ interface NumberStepperProps {
 
 export function NumberStepper({ label, value, onChange, min, max, step = 1, unit }: NumberStepperProps) {
   return (
-    <View style={styles.inputWrapper}>
+    <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.stepperRow}>
         <TouchableOpacity
           style={styles.stepperBtn}
           onPress={() => onChange(Math.max(min, value - step))}
+          activeOpacity={0.7}
         >
           <Text style={styles.stepperBtnText}>−</Text>
         </TouchableOpacity>
         <View style={styles.stepperValue}>
-          <Text style={styles.stepperValueNum}>{value}</Text>
-          <Text style={styles.stepperValueUnit}>{unit}</Text>
+          <Text style={styles.stepperNum}>{value}</Text>
+          <Text style={styles.stepperUnit}>{unit}</Text>
         </View>
         <TouchableOpacity
           style={styles.stepperBtn}
           onPress={() => onChange(Math.min(max, value + step))}
+          activeOpacity={0.7}
         >
           <Text style={styles.stepperBtnText}>+</Text>
         </TouchableOpacity>
@@ -278,93 +289,108 @@ export function NumberStepper({ label, value, onChange, min, max, step = 1, unit
 // Styles
 // ============================================
 const styles = StyleSheet.create({
-  inputWrapper: {
-    marginBottom: 20,
+  fieldGroup: {
+    marginBottom: Spacing.xl,
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    color: Colors.textSecondary,
+    letterSpacing: 0.2,
+    marginBottom: Spacing.sm,
   },
   labelHint: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.textTertiary,
+    marginBottom: Spacing.sm,
   },
   input: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.background,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    borderRadius: Radii.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: 14,
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 15,
+    color: Colors.textPrimary,
   },
   inputMultiline: {
     height: 100,
     textAlignVertical: 'top',
   },
   inputFocused: {
-    borderColor: '#EC4899',
-    backgroundColor: '#FFF',
+    borderColor: Colors.primaryMid,
+    backgroundColor: Colors.surface,
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: Colors.error,
   },
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: Colors.error,
     marginTop: 4,
   },
   charCount: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 11,
+    color: Colors.textTertiary,
     textAlign: 'right',
     marginTop: 4,
   },
+
   // Select
-  selectButton: {
+  selectBtn: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   selectValue: {
-    fontSize: 16,
-    color: '#111827',
+    fontSize: 15,
+    color: Colors.textPrimary,
   },
   selectPlaceholder: {
-    fontSize: 16,
-    color: '#9CA3AF',
+    fontSize: 15,
+    color: Colors.textTertiary,
   },
   chevron: {
     fontSize: 18,
-    color: '#9CA3AF',
+    color: Colors.textTertiary,
+    marginTop: -2,
   },
+
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(28,25,23,0.4)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radii.xxl,
+    borderTopRightRadius: Radii.xxl,
     maxHeight: '70%',
-    padding: 24,
+    paddingHorizontal: Spacing.xxl,
+    paddingBottom: 40,
+    paddingTop: Spacing.lg,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: Colors.border,
+    borderRadius: Radii.full,
+    alignSelf: 'center',
+    marginBottom: Spacing.lg,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
   },
   modalOption: {
     flexDirection: 'row',
@@ -372,135 +398,154 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.border,
   },
   modalOptionSelected: {
-    backgroundColor: '#FDF2F8',
+    // subtle — don't add background
   },
   modalOptionText: {
-    fontSize: 16,
-    color: '#374151',
+    fontSize: 15,
+    color: Colors.textSecondary,
   },
   modalOptionTextSelected: {
-    color: '#EC4899',
+    color: Colors.primary,
     fontWeight: '600',
   },
-  checkmark: {
-    fontSize: 16,
-    color: '#EC4899',
+  checkDot: {
+    width: 8,
+    height: 8,
+    borderRadius: Radii.full,
+    backgroundColor: Colors.primary,
   },
+
   // Chips
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    borderRadius: Radii.full,
+    backgroundColor: Colors.surfaceAlt,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
   },
   chipSelected: {
-    backgroundColor: '#FCE7F3',
-    borderColor: '#EC4899',
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryMid,
   },
   chipDisabled: {
-    opacity: 0.4,
+    opacity: 0.35,
   },
   chipText: {
-    fontSize: 14,
-    color: '#374151',
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   chipTextSelected: {
-    color: '#EC4899',
+    color: Colors.primary,
     fontWeight: '600',
   },
+
   // Gender
   genderRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.md,
   },
-  genderButton: {
+  genderBtn: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F9FAFB',
+    paddingVertical: 16,
+    borderRadius: Radii.lg,
+    backgroundColor: Colors.background,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     alignItems: 'center',
-    gap: 8,
   },
-  genderButtonSelected: {
-    backgroundColor: '#FCE7F3',
-    borderColor: '#EC4899',
+  genderBtnSelected: {
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primaryMid,
   },
-  genderEmoji: { fontSize: 28 },
-  genderText: { fontSize: 14, color: '#374151', fontWeight: '500' },
-  genderTextSelected: { color: '#EC4899', fontWeight: '700' },
+  genderText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  genderTextSelected: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+
   // Button
   button: {
-    backgroundColor: '#EC4899',
-    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: Radii.full,
     paddingVertical: 16,
     alignItems: 'center',
+    ...Shadows.primary,
   },
   buttonSecondary: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: '#EC4899',
+    borderColor: Colors.primaryMid,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonGhost: {
     backgroundColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   buttonDisabled: {
     opacity: 0.5,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#FFF',
+    fontWeight: '600',
+    color: Colors.textInverse,
+    letterSpacing: 0.2,
   },
   buttonTextSecondary: {
-    color: '#EC4899',
+    color: Colors.primary,
   },
   buttonTextGhost: {
-    color: '#9CA3AF',
+    color: Colors.textTertiary,
   },
+
   // Stepper
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: Spacing.xl,
   },
   stepperBtn: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+    borderRadius: Radii.full,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
   },
   stepperBtnText: {
-    fontSize: 24,
-    color: '#374151',
-    lineHeight: 28,
+    fontSize: 22,
+    color: Colors.textSecondary,
+    lineHeight: 26,
   },
   stepperValue: {
     flex: 1,
     alignItems: 'center',
   },
-  stepperValueNum: {
-    fontSize: 32,
+  stepperNum: {
+    fontSize: 30,
     fontWeight: '700',
-    color: '#111827',
+    color: Colors.textPrimary,
   },
-  stepperValueUnit: {
-    fontSize: 14,
-    color: '#9CA3AF',
+  stepperUnit: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
 });

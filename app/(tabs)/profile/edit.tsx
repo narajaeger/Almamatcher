@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Alert,
+  View, Text, ScrollView, StyleSheet, Alert, Platform,
   Image, TouchableOpacity, ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
@@ -14,8 +14,13 @@ import {
   StyledInput, SelectPicker, ChipSelector,
   GenderSelector, NumberStepper, PrimaryButton,
 } from '../../../components/ui/FormComponents';
+import SearchableSelect from '../../../components/ui/SearchableSelect';
+import { Colors, Radii, Spacing, Fonts, TAB_SAFE_BOTTOM } from '../../../constants/theme';
+import ScreenGradient from '../../../components/ui/ScreenGradient';
+import Icon, { type IconName } from '../../../components/ui/Icon';
 import type { MBTI, Zodiac, Religion, LookingFor, Gender } from '../../../types/profile';
-import { HOBBIES_LIST, UNIVERSITIES_LIST } from '../../../types/profile';
+import { HOBBIES_LIST } from '../../../types/profile';
+import { UNIVERSITIES, MAJORS } from '../../../constants/eduData';
 
 // Re-use lists dari step onboarding
 const MBTI_OPTIONS: MBTI[] = [
@@ -29,11 +34,11 @@ const ZODIAC_OPTIONS: Zodiac[] = [
 const RELIGION_OPTIONS: Religion[] = [
   'Islam','Kristen','Katolik','Hindu','Buddha','Konghucu','Lainnya',
 ];
-const LOOKING_FOR_OPTIONS: { value: LookingFor; label: string }[] = [
-  { value: 'relationship', label: '💕 Hubungan Serius' },
-  { value: 'friendship',   label: '🤝 Pertemanan' },
-  { value: 'study_buddy',  label: '📚 Study Buddy' },
-  { value: 'all',          label: '🌟 Semua' },
+const LOOKING_FOR_OPTIONS: { value: LookingFor; label: string; icon: IconName }[] = [
+  { value: 'relationship', label: 'Hubungan Serius', icon: 'heartFill' },
+  { value: 'friendship',   label: 'Pertemanan',      icon: 'handshake' },
+  { value: 'study_buddy',  label: 'Study Buddy',      icon: 'book' },
+  { value: 'all',          label: 'Semua',            icon: 'sparkles' },
 ];
 const FACULTY_OPTIONS = [
   'Teknik','Ekonomi & Bisnis','Hukum','Kedokteran','FMIPA',
@@ -66,6 +71,9 @@ export default function EditProfileScreen() {
   const [hobbies, setHobbies]         = useState<string[]>(profile?.hobbies ?? []);
   const [lookingFor, setLookingFor]   = useState<LookingFor | null>(profile?.looking_for as LookingFor ?? null);
   const [avatarUrl, setAvatarUrl]     = useState<string | null>(profile?.avatar_url ?? null);
+  const [instagram, setInstagram]     = useState(profile?.instagram ?? '');
+  const [spotify, setSpotify]         = useState(profile?.spotify ?? '');
+  const [linkedin, setLinkedin]       = useState(profile?.linkedin ?? '');
 
   const [activeSection, setActiveSection] = useState<Section>('identity');
   const [isSaving, setIsSaving] = useState(false);
@@ -94,32 +102,41 @@ export default function EditProfileScreen() {
       zodiac: zodiac ?? undefined,
       hobbies,
       looking_for: lookingFor ?? undefined,
+      instagram: instagram.trim() || null,
+      spotify: spotify.trim() || null,
+      linkedin: linkedin.trim() || null,
     });
     setIsSaving(false);
 
     if (success) {
-      Alert.alert('Tersimpan! ✓', 'Profil kamu berhasil diperbarui.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      // Alert doesn't render on react-native-web — just go back there.
+      if (Platform.OS === 'web') {
+        router.back();
+      } else {
+        Alert.alert('Tersimpan!', 'Profil kamu berhasil diperbarui.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
     } else {
       Alert.alert('Gagal', 'Terjadi kesalahan, coba lagi ya.');
     }
   };
 
-  const SECTIONS: { id: Section; label: string; emoji: string }[] = [
-    { id: 'identity',    label: 'Identitas',     emoji: '👤' },
-    { id: 'academic',    label: 'Kampus',         emoji: '🎓' },
-    { id: 'physical',    label: 'Fisik & Asal',   emoji: '📏' },
-    { id: 'personality', label: 'Kepribadian',    emoji: '✨' },
-    { id: 'preference',  label: 'Preferensi',     emoji: '💭' },
+  const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
+    { id: 'identity',    label: 'Identitas',     icon: 'user' },
+    { id: 'academic',    label: 'Kampus',         icon: 'graduation' },
+    { id: 'physical',    label: 'Fisik & Asal',   icon: 'ruler' },
+    { id: 'personality', label: 'Kepribadian',    icon: 'sparkles' },
+    { id: 'preference',  label: 'Preferensi',     icon: 'heart' },
   ];
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ScreenGradient />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backBtn}>← Kembali</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <Icon name="chevronLeft" size={22} color={Colors.textPrimary} weight={2.4} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profil</Text>
         <TouchableOpacity onPress={handleSave} disabled={isSaving}>
@@ -138,16 +155,16 @@ export default function EditProfileScreen() {
             disabled={isUploading}
           >
             {isUploading ? (
-              <ActivityIndicator size="large" color="#EC4899" />
+              <ActivityIndicator size="large" color={Colors.primary} />
             ) : avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarPlaceholderIcon}>📸</Text>
+                <Icon name="camera" size={32} color={Colors.primary} weight={1.8} />
               </View>
             )}
             <View style={styles.avatarEditBadge}>
-              <Text style={styles.avatarEditIcon}>✏️</Text>
+              <Icon name="edit" size={13} color="#fff" weight={2.4} />
             </View>
           </TouchableOpacity>
           <Text style={styles.avatarLabel}>
@@ -167,8 +184,16 @@ export default function EditProfileScreen() {
               key={s.id}
               style={[styles.tab, activeSection === s.id && styles.tabActive]}
               onPress={() => setActiveSection(s.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: activeSection === s.id }}
             >
-              <Text style={styles.tabEmoji}>{s.emoji}</Text>
+              <Icon
+                name={s.icon}
+                size={15}
+                color={activeSection === s.id ? Colors.primaryHover : Colors.textSecondary}
+                weight={2}
+                fill={activeSection === s.id ? Colors.primaryHover : Colors.textSecondary}
+              />
               <Text style={[styles.tabLabel, activeSection === s.id && styles.tabLabelActive]}>
                 {s.label}
               </Text>
@@ -189,20 +214,41 @@ export default function EditProfileScreen() {
               <StyledInput label="Bio" value={bio} onChangeText={setBio}
                 placeholder="Ceritakan tentang dirimu..." multiline maxLength={200} />
               <GenderSelector value={gender} onChange={setGender} />
+
+              <Text style={styles.groupLabel}>Tautan Sosial (opsional)</Text>
+              <StyledInput label="Instagram" value={instagram} onChangeText={setInstagram}
+                placeholder="@username atau link" />
+              <StyledInput label="Spotify" value={spotify} onChangeText={setSpotify}
+                placeholder="username atau link profil" />
+              <StyledInput label="LinkedIn" value={linkedin} onChangeText={setLinkedin}
+                placeholder="username atau link profil" />
             </>
           )}
 
           {/* SECTION: Kampus */}
           {activeSection === 'academic' && (
             <>
-              <SelectPicker label="Universitas" value={university || null}
-                options={[...UNIVERSITIES_LIST]} onSelect={setUniversity}
-                placeholder="Pilih universitas..." />
+              <Text style={styles.groupLabel}>Universitas</Text>
+              <View style={styles.inputWrapper}>
+                <SearchableSelect
+                  value={university}
+                  onChangeText={setUniversity}
+                  options={UNIVERSITIES}
+                  placeholder="Cari universitas... (atau ketik manual)"
+                />
+              </View>
               <SelectPicker label="Fakultas" value={faculty || null}
                 options={FACULTY_OPTIONS} onSelect={setFaculty}
                 placeholder="Pilih fakultas..." />
-              <StyledInput label="Program Studi / Jurusan" value={major}
-                onChangeText={setMajor} placeholder="Contoh: Teknik Informatika" />
+              <Text style={styles.groupLabel}>Program Studi / Jurusan</Text>
+              <View style={styles.inputWrapper}>
+                <SearchableSelect
+                  value={major}
+                  onChangeText={setMajor}
+                  options={MAJORS}
+                  placeholder="Cari jurusan/prodi... (atau ketik manual)"
+                />
+              </View>
               <SelectPicker label="Angkatan"
                 value={yearEntry || null}
                 options={Array.from({ length: 8 }, (_, i) => String(new Date().getFullYear() - i))}
@@ -253,13 +299,22 @@ export default function EditProfileScreen() {
                       ]}
                       onPress={() => setLookingFor(opt.value)}
                     >
-                      <Text style={[
-                        styles.lookingForText,
-                        lookingFor === opt.value && styles.lookingForTextSelected,
-                      ]}>
-                        {opt.label}
-                      </Text>
-                      {lookingFor === opt.value && <Text style={styles.check}>✓</Text>}
+                      <View style={styles.lookingForLeft}>
+                        <Icon
+                          name={opt.icon}
+                          size={18}
+                          color={lookingFor === opt.value ? Colors.primaryHover : Colors.textSecondary}
+                          weight={2}
+                          fill={lookingFor === opt.value ? Colors.primaryHover : Colors.textSecondary}
+                        />
+                        <Text style={[
+                          styles.lookingForText,
+                          lookingFor === opt.value && styles.lookingForTextSelected,
+                        ]}>
+                          {opt.label}
+                        </Text>
+                      </View>
+                      {lookingFor === opt.value && <Icon name="check" size={16} color={Colors.primary} weight={3} />}
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -282,67 +337,74 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FFF' },
+  safeArea: { flex: 1, backgroundColor: Colors.backgroundWarm },
   // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(253,251,247,0.55)',
   },
-  backBtn: { fontSize: 15, color: '#6B7280' },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
-  saveBtn: { fontSize: 15, color: '#EC4899', fontWeight: '700' },
-  saveBtnDisabled: { color: '#D1D5DB' },
+  backBtn: {
+    width: 40, height: 40, borderRadius: Radii.full, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+  headerTitle: { fontSize: 18, fontFamily: Fonts.display.bold, color: Colors.textPrimary, letterSpacing: -0.3 },
+  saveBtn: { fontSize: 15, color: Colors.primary, fontFamily: Fonts.sans.bold },
+  saveBtnDisabled: { color: Colors.textTertiary },
   // Avatar
-  avatarSection: { alignItems: 'center', paddingVertical: 24 },
+  avatarSection: { alignItems: 'center', paddingVertical: Spacing.xxl },
   avatarContainer: {
-    width: 100, height: 100, borderRadius: 50,
-    backgroundColor: '#F3F4F6', overflow: 'hidden',
-    borderWidth: 3, borderColor: '#EC4899',
+    width: 104, height: 104, borderRadius: 52,
+    backgroundColor: Colors.primaryLight, overflow: 'hidden',
+    borderWidth: 3, borderColor: Colors.primaryMid,
     alignItems: 'center', justifyContent: 'center',
   },
   avatar: { width: '100%', height: '100%' },
-  avatarPlaceholder: { alignItems: 'center' },
-  avatarPlaceholderIcon: { fontSize: 36 },
+  avatarPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   avatarEditBadge: {
-    position: 'absolute', bottom: 0, right: 0,
-    backgroundColor: '#EC4899', width: 28, height: 28,
-    borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: '#FFF',
+    position: 'absolute', bottom: 2, right: 2,
+    backgroundColor: Colors.primary, width: 30, height: 30,
+    borderRadius: 15, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: Colors.surface,
   },
-  avatarEditIcon: { fontSize: 12 },
-  avatarLabel: { marginTop: 8, fontSize: 14, color: '#9CA3AF' },
+  avatarLabel: { marginTop: Spacing.sm, fontSize: 14, color: Colors.textTertiary, fontFamily: Fonts.sans.medium },
   // Tabs
   tabsContainer: { maxHeight: 72 },
-  tabs: { paddingHorizontal: 16, gap: 8, paddingVertical: 8 },
+  tabs: { paddingHorizontal: Spacing.lg, gap: Spacing.sm, paddingVertical: Spacing.sm },
   tab: {
-    paddingHorizontal: 16, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: '#F3F4F6',
-    borderWidth: 1.5, borderColor: '#E5E7EB',
+    paddingHorizontal: 16, paddingVertical: 9,
+    borderRadius: Radii.full, backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1.5, borderColor: Colors.border,
     flexDirection: 'row', gap: 6, alignItems: 'center',
   },
-  tabActive: { backgroundColor: '#FCE7F3', borderColor: '#EC4899' },
+  tabActive: { backgroundColor: Colors.primaryLight, borderColor: Colors.primary },
   tabEmoji: { fontSize: 14 },
-  tabLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  tabLabelActive: { color: '#EC4899', fontWeight: '700' },
+  tabLabel: { fontSize: 13, color: Colors.textSecondary, fontFamily: Fonts.sans.semibold },
+  tabLabelActive: { color: Colors.primaryHover, fontFamily: Fonts.sans.bold },
   // Form
   container: { flex: 1 },
-  form: { padding: 24 },
-  inputWrapper: { marginBottom: 20 },
-  sectionLabel: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 },
-  lookingForList: { gap: 10 },
+  form: { padding: Spacing.xxl, paddingBottom: TAB_SAFE_BOTTOM },
+  inputWrapper: { marginBottom: Spacing.xl },
+  sectionLabel: { fontSize: 14, fontFamily: Fonts.sans.semibold, color: Colors.textPrimary, marginBottom: Spacing.md },
+  groupLabel: {
+    fontSize: 11, fontFamily: Fonts.sans.bold, color: Colors.textTertiary,
+    textTransform: 'uppercase', letterSpacing: 1.2,
+    marginTop: Spacing.md, marginBottom: Spacing.sm,
+  },
+  lookingForList: { gap: Spacing.sm },
   lookingForRow: {
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', padding: 16, borderRadius: 12,
-    backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: '#E5E7EB',
+    alignItems: 'center', padding: Spacing.lg, borderRadius: Radii.md,
+    backgroundColor: 'rgba(255,255,255,0.5)', borderWidth: 1.5, borderColor: Colors.border,
   },
-  lookingForRowSelected: { backgroundColor: '#FCE7F3', borderColor: '#EC4899' },
-  lookingForText: { fontSize: 15, color: '#374151' },
-  lookingForTextSelected: { color: '#EC4899', fontWeight: '600' },
-  check: { fontSize: 16, color: '#EC4899' },
-  saveSection: { marginTop: 24 },
+  lookingForRowSelected: { backgroundColor: Colors.primaryLight, borderColor: Colors.primary },
+  lookingForLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md, flex: 1 },
+  lookingForText: { fontSize: 15, color: Colors.textSecondary, fontFamily: Fonts.sans.medium },
+  lookingForTextSelected: { color: Colors.primaryHover, fontFamily: Fonts.sans.bold },
+  saveSection: { marginTop: Spacing.xxl },
 });

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- viewport-fit=cover -> lets the app fill the whole iOS screen (under the
+         notch / home indicator) and enables the env(safe-area-inset-*) values. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no, viewport-fit=cover"
+    />
+    <title>%WEB_TITLE%</title>
+
+    <meta name="theme-color" content="#EC4899" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    <!-- PWA (Android / Chrome / desktop) -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- PWA (iOS "Add to Home Screen") -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AlmaMatcher" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Register the service worker (enables install / offline shell) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      }
+    </script>
+
+    <!-- react-native-web reset + global styles + iOS fullscreen fixes -->
+    <style id="expo-reset">
+      *, *::before, *::after {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* height:100% is the classic culprit for the "cut off top & bottom" bug on
+         iOS Safari because it ignores the dynamic address / tool bars. 100dvh
+         (dynamic viewport height) tracks the actually-visible area, so the app
+         fills the screen edge-to-edge without being clipped. */
+      html, body, #root {
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #E7E0D4;
+        /* keep content clear of the notch / home indicator when running
+           edge-to-edge (viewport-fit=cover). 0 on devices without insets. */
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+          env(safe-area-inset-bottom) env(safe-area-inset-left);
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+          'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+
+      /* Desktop: keep the app a centered, mobile-width column. */
+      #root {
+        display: flex;
+        flex: 1;
+        max-width: 480px;
+        margin: 0 auto;
+        position: relative;
+        box-shadow: 0 0 70px rgba(107, 99, 85, 0.18);
+      }
+
+      /* Apply Jakarta Sans to all RN Text on web */
+      [data-testid], div, span, p, h1, h2, h3, h4, h5, h6 {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont,
+          'Segoe UI', Helvetica, Arial, sans-serif;
+      }
+
+      /* Thin scrollbars */
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #D4CEC3; border-radius: 2px; }
+      ::-webkit-scrollbar-thumb:hover { background: #A8A29E; }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

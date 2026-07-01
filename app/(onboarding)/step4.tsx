@@ -125,7 +125,7 @@ export default function OnboardingStep4() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 24, paddingBottom: 48 },
   header: { marginBottom: 32, alignItems: 'center' },
   emoji: { fontSize: 48, marginBottom: 12 },

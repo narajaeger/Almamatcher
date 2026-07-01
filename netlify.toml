@@ -1,0 +1,37 @@
+# Netlify config for the Expo Router web export.
+# `expo export -p web` outputs a single-page app to `dist/` and copies
+# everything in `public/` (including `_redirects`) to the publish root.
+# The redirect below makes client-side routes (e.g. /login, /(tabs)/love)
+# resolve to the app shell instead of returning Netlify's 404 on refresh.
+
+[build]
+  command = "npx expo export -p web"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ── Security Headers ──────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+
+    # Prevent MIME-type sniffing
+    X-Content-Type-Options = "nosniff"
+
+    # Control referrer info sent to third parties
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Restrict browser features
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+
+    # Force HTTPS for 1 year, include subdomains
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+    # Content Security Policy
+    # Allows: self, Supabase, Expo CDN; blocks inline scripts and framing.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://exp.host; frame-ancestors 'none';"

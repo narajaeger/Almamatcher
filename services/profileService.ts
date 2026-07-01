@@ -26,13 +26,38 @@ export async function getMyProfile(): Promise<Profile | null> {
   return data as Profile;
 }
 
+// Safe public fields — explicitly excludes push_token, is_premium, premium_until, email
+// Base set is always present; social columns are appended only if the migration ran.
+const PUBLIC_PROFILE_FIELDS_BASE =
+  'id, full_name, username, avatar_url, bio, university, faculty, major, year_entry, ' +
+  'birth_date, gender, height_cm, weight_kg, city_origin, mbti, zodiac, religion, ' +
+  'hobbies, looking_for, onboarding_completed, created_at';
+const SOCIAL_FIELDS = 'instagram, spotify, linkedin';
+export const PUBLIC_PROFILE_FIELDS = `${PUBLIC_PROFILE_FIELDS_BASE}, ${SOCIAL_FIELDS}`;
+
+// True when a Postgres/PostgREST error means an unknown column (social-links
+// migration not applied yet). We retry without those columns so the app keeps working.
+function isMissingColumn(err: { code?: string; message?: string } | null): boolean {
+  if (!err) return false;
+  return err.code === '42703' || err.code === 'PGRST204' ||
+    /column .* does not exist|could not find the .*(instagram|spotify|linkedin)/i.test(err.message ?? '');
+}
+
 /** Ambil profil by ID (untuk lihat profil orang lain) */
 export async function getProfileById(userId: string): Promise<Profile | null> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PUBLIC_PROFILE_FIELDS)
     .eq('id', userId)
     .single();
+
+  if (error && isMissingColumn(error)) {
+    ({ data, error } = await supabase
+      .from('profiles')
+      .select(PUBLIC_PROFILE_FIELDS_BASE)
+      .eq('id', userId)
+      .single());
+  }
 
   if (error) {
     console.error('[getProfileById]', error.message);
@@ -57,6 +82,21 @@ export async function updateProfile(updates: ProfileUpdate): Promise<{ success: 
     .from('profiles')
     .update(updates)
     .eq('id', user.id);
+
+  // If the social-links migration hasn't been applied yet, retry without those
+  // columns so the rest of the profile (name, university, hobbies, …) still saves.
+  if (error && isMissingColumn(error)) {
+    const { instagram, spotify, linkedin, ...rest } = updates as Record<string, unknown>;
+    const { error: retryErr } = await supabase
+      .from('profiles')
+      .update(rest)
+      .eq('id', user.id);
+    if (retryErr) {
+      console.error('[updateProfile]', retryErr.message);
+      return { success: false, error: retryErr.message };
+    }
+    return { success: true };
+  }
 
   if (error) {
     console.error('[updateProfile]', error.message);
@@ -104,8 +144,10 @@ export async function checkUsernameAvailable(username: string): Promise<boolean>
 // ============================================
 
 /**
- * Upload avatar ke Supabase Storage
- * Mengembalikan public URL
+ * Upload avatar ke Supabase Storage.
+ * Bucket tetap public agar avatar_url bisa langsung dipakai di <Image />.
+ * Akses API sudah dibatasi authenticated-only lewat storage RLS policy.
+ * Untuk fully-private bucket, perlu refactor semua komponen untuk pakai signed URL.
  */
 export async function uploadAvatar(
   userId: string,
@@ -122,7 +164,7 @@ export async function uploadAvatar(
     .from('avatars')
     .upload(fileName, blob, {
       contentType: mimeType,
-      upsert: true,       // Timpa jika sudah ada
+      upsert: true,
     });
 
   if (error) {
@@ -130,7 +172,6 @@ export async function uploadAvatar(
     return { url: null, error: error.message };
   }
 
-  // Ambil public URL
   const { data: { publicUrl } } = supabase.storage
     .from('avatars')
     .getPublicUrl(data.path);

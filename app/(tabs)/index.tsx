@@ -1,9 +1,8 @@
-import { View, Text } from 'react-native';
+// app/(tabs)/index.tsx
+// Hidden tab — redirect immediately to love screen
 
-export default function HomeScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>🏠 Home — coming soon!</Text>
-    </View>
-  );
+import { Redirect } from 'expo-router';
+
+export default function IndexRedirect() {
+  return <Redirect href="/(tabs)/love" />;
 }
